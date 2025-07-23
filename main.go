@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"net"
 	"net/http"
 	"strings"
 	"github.com/erwaen/pneumo/minivalkey"
@@ -41,17 +40,18 @@ func main() {
 	fmt.Println("checking on valkey...")
 
 	// check if can connect to valkey
-	conn, err := net.Dial("tcp", "localhost:6379")
+	valkeyConn, err := minivalkey.Connect("localhost:6379")
+
 
 	if err != nil {
 		log.Fatalf("Could not connect to valkey: %v", err)
 	}else{
 		fmt.Println("Connected to valkey successfully!")
 	}
-	defer conn.Close()
+	defer valkeyConn.Close()
 
 	// check health
-	resp, err := minivalkey.SendRespCommand(conn, "PING")
+	resp, err := minivalkey.SendRespCommand(valkeyConn, "PING")
 	if err != nil {
 		log.Fatalf("Error sending PING command: %v", err)
 	}

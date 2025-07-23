@@ -7,6 +7,15 @@ import (
 	"strings"
 )
 
+func Connect(addr string) (net.Conn, error) {
+	valkeyConn, err := net.Dial("tcp", addr)
+	if err != nil {
+		return nil, fmt.Errorf("error connecting to valkey server: %w", err)
+	}
+
+	return valkeyConn, nil
+}
+
 func SendRespCommand(valkeyConn net.Conn, command string, args ...string) (string, error) {
 	// for the first line of RESP format (*{len}\r\n)
 	elements := append([]string{command}, args...)
