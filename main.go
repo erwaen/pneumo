@@ -8,10 +8,6 @@ import (
 	"strings"
 )
 
-// func SendRespCommand(conn net.Conn, args ...string) (string, error) {
-//
-// }
-
 type Pneumonic struct {
 	FullUrl   string
 	PneumoUrl string
@@ -39,17 +35,17 @@ func main() {
 	fmt.Println("checking on valkey...")
 
 	// check if can connect to valkey
-	valkeyConn, err := minivalkey.Connect("localhost:6379")
+	valkeyClient, err := minivalkey.CreateClient("localhost:6379")
 
 	if err != nil {
 		log.Fatalf("Could not connect to valkey: %v", err)
 	} else {
 		fmt.Println("Connected to valkey successfully!")
 	}
-	defer valkeyConn.Close()
+	defer valkeyClient.Close()
 
 	// check health
-	resp, err := minivalkey.SendRespCommand(valkeyConn, "PING")
+	resp, err := valkeyClient.SendRespCommand("PING")
 	if err != nil {
 		log.Fatalf("Error sending PING command: %v", err)
 	}

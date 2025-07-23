@@ -7,16 +7,28 @@ import (
 	"strings"
 )
 
-func Connect(addr string) (net.Conn, error) {
-	valkeyConn, err := net.Dial("tcp", addr)
-	if err != nil {
-		return nil, fmt.Errorf("error connecting to valkey server: %w", err)
-	}
-
-	return valkeyConn, nil
+type Client struct {
+	conn net.Conn
+	reader *bufio.Reader
 }
 
-func SendRespCommand(valkeyConn net.Conn, command string, args ...string) (string, error) {
+func CreateClient(addr string) (*Client, error) {
+    conn, err := net.Dial("tcp", addr)
+    if err != nil {
+        return nil, fmt.Errorf("error connecting to valkey server: %w", err)
+    }
+
+    return &Client{
+        conn:   conn,
+        reader: bufio.NewReader(conn),
+    }, nil
+}
+
+func (c *Client) Close() error {
+	return c.conn.Close()
+}
+
+func (c *Client) SendRespCommand(command string, args ...string) (string, error) {
 	// for the first line of RESP format (*{len}\r\n)
 	elements := append([]string{command}, args...)
 	arrayLen := len(elements)
@@ -33,23 +45,16 @@ func SendRespCommand(valkeyConn net.Conn, command string, args ...string) (strin
 	}
 
 	// send the command
-	_, err := valkeyConn.Write([]byte(sb.String()))
+	_, err := c.conn.Write([]byte(sb.String()))
 	if err != nil {
 		return "", fmt.Errorf("erro sending a RESP command: %w", err)
 	}
 
-	// read response
-	reader := bufio.NewReader(valkeyConn)
-	response, err := readRespReply(reader)
-	if err != nil {
-		return "", err
-	}
-
-	return response, nil
+    return c.readRespReply()
 }
 
-func readRespReply(reader *bufio.Reader) (string, error) {
-	line, err := reader.ReadString('\n')
+func (c *Client) readRespReply() (string, error) {
+	line, err := c.reader.ReadString('\n')
 	if err != nil {
 		return "", fmt.Errorf("error reading response from valkey server: %w", err)
 	}
@@ -82,7 +87,7 @@ func readRespReply(reader *bufio.Reader) (string, error) {
 
 		// read the data + 2 (\r\n)
 		bulkData := make([]byte, bulkLen+2)
-		_, err = reader.Read(bulkData)
+		_, err = c.reader.Read(bulkData)
 		if err != nil {
 			return "", fmt.Errorf("error reading bulk string data: %w", err)
 		}
@@ -105,6 +110,5 @@ func readRespReply(reader *bufio.Reader) (string, error) {
 
 	default:
 		return "", fmt.Errorf("unknown RESP type: %c", line[0])
-
 	}
 }
