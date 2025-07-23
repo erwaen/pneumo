@@ -28,6 +28,7 @@ func (c *Client) Close() error {
 	return c.conn.Close()
 }
 
+
 func (c *Client) SendRespCommand(command string, args ...string) (string, error) {
 	// for the first line of RESP format (*{len}\r\n)
 	elements := append([]string{command}, args...)
@@ -112,3 +113,11 @@ func (c *Client) readRespReply() (string, error) {
 		return "", fmt.Errorf("unknown RESP type: %c", line[0])
 	}
 }
+
+func (c *Client) Set(key, value string) (string, error) {
+	return c.SendRespCommand("SET", key, value)
+}
+func (c *Client) Get(key string) (string, error) {
+	return c.SendRespCommand("GET", key)
+}
+

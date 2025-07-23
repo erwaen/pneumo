@@ -29,3 +29,27 @@ func (ss *StorageService) Close() error {
 	return ss.valkeyClient.Close()
 }
 
+
+func (ss *StorageService) storePneumo(fullUrl, pneumo string) error {
+	_, err := ss.valkeyClient.Set(pneumo, fullUrl)
+	if err != nil {
+		return fmt.Errorf("error storing pneumo: %w", err)
+	}
+
+	return nil
+}
+
+func (ss *StorageService) retrieveFromPneumo(pneumo string) (string, error) {
+	fullUrl, err := ss.valkeyClient.Get(pneumo)
+	if err != nil {
+		return "", fmt.Errorf("error retrieving full pneumo: %w", err)
+	}
+
+	if fullUrl == "" {
+		return "", fmt.Errorf("pneumo not found: %s", pneumo)
+	}
+
+	return fullUrl, nil
+}
+
+
