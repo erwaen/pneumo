@@ -2,16 +2,15 @@ package main
 
 import (
 	"fmt"
+	"github.com/erwaen/pneumo/minivalkey"
 	"log"
 	"net/http"
 	"strings"
-	"github.com/erwaen/pneumo/minivalkey"
 )
 
 // func SendRespCommand(conn net.Conn, args ...string) (string, error) {
 //
 // }
-
 
 type Pneumonic struct {
 	FullUrl   string
@@ -42,10 +41,9 @@ func main() {
 	// check if can connect to valkey
 	valkeyConn, err := minivalkey.Connect("localhost:6379")
 
-
 	if err != nil {
 		log.Fatalf("Could not connect to valkey: %v", err)
-	}else{
+	} else {
 		fmt.Println("Connected to valkey successfully!")
 	}
 	defer valkeyConn.Close()
@@ -56,7 +54,6 @@ func main() {
 		log.Fatalf("Error sending PING command: %v", err)
 	}
 	fmt.Println("response", resp)
-
 
 	http.HandleFunc("/", handler)
 	log.Fatal(http.ListenAndServe(":8080", nil))
