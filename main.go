@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/erwaen/pneumo/minivalkey"
+	"github.com/erwaen/pneumo/store"
 	"log"
 	"net/http"
 	"strings"
@@ -34,22 +34,9 @@ func handler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	fmt.Println("checking on valkey...")
 
-	// check if can connect to valkey
-	valkeyClient, err := minivalkey.CreateClient("localhost:6379")
+	store := store.CreateStore()
+	defer store.Close()
 
-	if err != nil {
-		log.Fatalf("Could not connect to valkey: %v", err)
-	} else {
-		fmt.Println("Connected to valkey successfully!")
-	}
-	defer valkeyClient.Close()
-
-	// check health
-	resp, err := valkeyClient.SendRespCommand("PING")
-	if err != nil {
-		log.Fatalf("Error sending PING command: %v", err)
-	}
-	fmt.Println("response", resp)
 
 	http.HandleFunc("/", handler)
 	log.Fatal(http.ListenAndServe(":8080", nil))
