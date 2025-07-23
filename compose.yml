@@ -1,0 +1,28 @@
+# create a docker compose file for up to server, my pneumo server written in golang, and valkey
+#
+
+
+services:
+  pneumo:
+    image: pneumo:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8080"
+    environment:
+      - ENV=production
+    networks:
+      - pneumo_network
+    entrypoint: ["./server"]
+
+  valkey:
+    image: valkey/valkey:latest
+    ports:
+      - "6379:6379"
+    networks:
+      - pneumo_network
+
+networks:
+  pneumo_network:
+    driver: bridge
