@@ -7,7 +7,6 @@ import (
 	"github.com/itchyny/base58-go"
 	"os"
 	"math/big"
-	"bytes"
 )
 
 func sha256Pneumo(input string) []byte {
