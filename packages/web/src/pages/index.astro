@@ -1,0 +1,37 @@
+---
+import '../styles/global.css';
+// Component Imports
+import WrappedHoverCard from '@/components/react/WrappedHoverCard';
+import URLShortenerForm from '@/components/react/URLPneumifyForm';
+
+
+// Full Astro Component Syntax:
+// https://docs.astro.build/basics/astro-components/
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Pneumo</title>
+	</head>
+
+	<body>
+        <div class="grid place-items-center h-screen  content-center">
+            <h1 class="text-4xl font-bold mb-4">Pneumo</h1>
+            <p class="text-lg mb-6">Pneumify your URL with pneumo</p>
+            <URLShortenerForm client:load />
+		</div>
+    </body>
+
+    <footer>
+        <p class="text-center text-sm text-gray-500 mt-4">
+            Made with ❤️ by 
+            <a href="erwaen.github.io" class="text-blue-500 hover:underline">
+                <WrappedHoverCard  title="erwaen" client:only="react"/>
+            </a>
+        </p>
+    </footer>
+</html>

@@ -1,7 +1,3 @@
-# create a docker compose file for up to server, my pneumo server written in golang, and valkey
-#
-
-
 services:
   pneumo:
     image: pneumo:latest
@@ -16,12 +12,28 @@ services:
       - pneumo_network
     entrypoint: ["./server"]
 
+    depends_on:
+      - valkey
+
   valkey:
-    image: valkey/valkey:latest
+    image: valkey/valkey:8.1.3
     ports:
       - "6379:6379"
     networks:
       - pneumo_network
+
+  astro:
+    image: oven/bun:latest
+    working_dir: /app
+    volumes:
+      - ./packages/web:/app
+    ports:
+      - "4321:4321"
+      # bunx --bun astro dev
+    command: sh -c "bun install && bunx --bun astro dev --host"
+    networks:
+      - pneumo_network
+
 
 networks:
   pneumo_network:

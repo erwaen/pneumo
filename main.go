@@ -3,11 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/erwaen/pneumo/pneumify"
+	"github.com/erwaen/pneumo/store"
 	"log"
 	"net/http"
 	"strings"
-	"github.com/erwaen/pneumo/pneumify"
-	"github.com/erwaen/pneumo/store"
 )
 
 type Server struct {
@@ -15,14 +15,14 @@ type Server struct {
 }
 
 type PneumifyRequest struct {
-	URL string `json:url`
+	URL string `json:"url"`
 }
 
 type PneumifyResponse struct {
-	ShortURL string `json:short_url`
+	ShortURL string `json:"short_url"`
 }
 
-func getFullURL(r *http.Request) string {
+func getDomainUrl(r *http.Request) string {
 	// Get the scheme (http or https)
 	scheme := "http"
 	if r.TLS != nil {
@@ -30,7 +30,7 @@ func getFullURL(r *http.Request) string {
 	}
 
 	// Construct the full URL
-	return fmt.Sprintf("%s://%s%s", scheme, r.Host, r.URL.Path)
+	return fmt.Sprintf("%s://%s", scheme, r.Host)
 }
 
 func (s *Server) handlerPneumify(w http.ResponseWriter, r *http.Request) {
@@ -56,7 +56,10 @@ func (s *Server) handlerPneumify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shortUrl := fmt.Sprintf("http://localhost:8080/%s", pneumo)
+	// Construct the short URL using the domain of getfullurl
+
+	shortUrl := getDomainUrl(r) + "/" + pneumo	
+
 
 	resp := PneumifyResponse{
 		ShortURL: shortUrl,
@@ -75,11 +78,30 @@ func (s *Server) handlerGetURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-    if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
-        url = "http://" + url
-    }
+	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
+		url = "http://" + url
+	}
+
+
 
 	http.Redirect(w, r, url, 302)
+}
+
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Add("Access-Control-Allow-Credentials", "true")
+		w.Header().Add("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+		w.Header().Add("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+
+		if r.Method == "OPTIONS" {
+			http.Error(w, "No Content", http.StatusNoContent)
+			return
+		}
+
+		// Call the next handler in the chain
+		next.ServeHTTP(w, r)
+	})
 }
 
 func main() {
@@ -92,7 +114,13 @@ func main() {
 		store: store,
 	}
 
-	http.HandleFunc("POST /pneumify/", server.handlerPneumify)
-	http.HandleFunc("GET /{pneumo}", server.handlerGetURL)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("POST /pneumify/", server.handlerPneumify)
+	mux.HandleFunc("GET /{pneumo}", server.handlerGetURL)
+
+	handler := corsMiddleware(mux)
+
+	fmt.Println("Server starting on :8080")
+	log.Fatal(http.ListenAndServe(":8080", handler))
 }
